@@ -20,12 +20,14 @@ const devPath = {
     html: [dev + '/**/*.html', '!' + dev + '/_*/*.html'],
     css: dev + '/css/**/*.css',
     js: dev + '/js/**/*.js',
-    images: dev + '/images/**/*.{gif,png,jpeg,jpg,svg}'
+    images: dev + '/images/**/*.{gif,png,jpeg,jpg,svg}',
+    fonts: dev + '/fonts/**/*'
 }, buildPath = {
     html: build+ '/',
     css: build + '/css',
     js: build + '/js',
-    images: build + '/images/'
+    images: build + '/images/',
+    fonts: build + '/fonts/'
 };
 
 // build 폴더를 기준으로 웹서버 실행
@@ -88,6 +90,13 @@ gulp.task('imgMinCompile', function (done) {
     done();
 });
 
+// 폰트
+gulp.task('fontCompile', function (done) {
+    gulp.src(devPath.fonts)
+        .pipe(gulp.dest(buildPath.fonts));
+    done();
+})
+
 // 파일 변경 감지
 gulp.task('watch', function (done) {
     //src 디렉토리 안에 html 확장자를 가진 파일이 변경되면 htmlComplie task 실행
@@ -104,4 +113,4 @@ gulp.task('watch', function (done) {
 // gulp를 실행하면 default 로 server task와 watch task, imgMinCompile task를 실행
 // series = 순차
 // parallel = 동시 or 병렬(실행은 동시에 시작되지만 처리속도에 따라 종료시점이 달라진다)
-gulp.task('default', gulp.series('jsCompile', 'cssCompile', 'htmlComplie', 'imgMinCompile', gulp.parallel('watch', 'server')));
+gulp.task('default', gulp.series('jsCompile', 'cssCompile', 'htmlComplie', 'imgMinCompile', 'fontCompile', gulp.parallel('watch', 'server')));
