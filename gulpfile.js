@@ -2,7 +2,6 @@ const gulp = require('gulp');
 
 const fileinclude = require('gulp-file-include');
 const browserSync = require('browser-sync').create();
-const newer = require('gulp-newer');
 const imagemin = require('gulp-imagemin');
 const autoprefixer  = require('gulp-autoprefixer');
 const beautify = require('gulp-jsbeautifier');
@@ -82,11 +81,9 @@ gulp.task('jsCompile', function (done) {
 // 이미지 압축
 gulp.task('imgMinCompile', function (done) {
     gulp.src(devPath.images)
-        .pipe(newer('src')) //src폴더내부의 변경이 있는 파일을 확인
         .pipe(imagemin({ 
             optimizationLevel: 5, progressive: true, interlaced: true 
         })) //이미지 최적화
-        // .pipe(gulp.dest(devPath.images)) //최적화 이미지를 src에 출력
         .pipe(gulp.dest(buildPath.images)); //동시에 build에도 출력
     done();
 });
