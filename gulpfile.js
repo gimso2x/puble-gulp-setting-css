@@ -4,28 +4,26 @@ const fileinclude = require('gulp-file-include');
 const browserSync = require('browser-sync').create();
 const imagemin = require('gulp-imagemin');
 const autoprefixer  = require('gulp-autoprefixer');
-const beautify = require('gulp-jsbeautifier');
+const cssbeautify = require('gulp-cssbeautify');
 
 // 소스 루트 경로
 const dev ='./dev';
 const build = './build';
 
-const beautifyOpt = {
-    indent_char: '\t',
-    indent_size: 1
-}
-
 // 소스 세부 경로
 const devPath = {
-    html: [dev + '/**/*.html', '!' + dev + '/_*/*.html'],
+    html: [ dev + '/html/**/*.html', '!' + dev + '/_*/*.html'],
     css: dev + '/css/**/*.css',
-    js: dev + '/js/**/*.js',
+    js: [ dev + '/js/**/*.js', '!' + dev + '/js/util/**/*' ],
+    jsUtils: dev + '/js/util/**/*',
     images: dev + '/images/**/*.{gif,png,jpeg,jpg,svg}',
     fonts: dev + '/fonts/**/*'
-}, buildPath = {
-    html: build+ '/',
+};
+const buildPath = {
+    html: build+ '/html',
     css: build + '/css',
     js: build + '/js',
+    jsUtils: build + '/js/util',
     images: build + '/images/',
     fonts: build + '/fonts/'
 };
@@ -34,7 +32,7 @@ const devPath = {
 gulp.task('server', function (done) {
     browserSync.init({
         server: {
-            baseDir: './build/html', // 웹서버 root폴더 경로 지정
+            baseDir: './build/', // 웹서버 root폴더 경로 지정
             directory: true
         },
         browser: ["chrome", /*"firefox"*/] // 원하는 브라우저로 실행한다
@@ -65,7 +63,10 @@ gulp.task('cssCompile', function (done) {
                 "last 2 versions" // he last 2 versions for each browser.
             ]
         }))
-        .pipe(beautify(beautifyOpt))
+        .pipe(cssbeautify({
+            indent: '\t',
+            autosemicolon: true
+        }))
         .pipe(gulp.dest(buildPath.css)) //위에 설정된 build 폴더에 저장
         .pipe(browserSync.reload({stream:true})); //browserSync 로 브라우저에 반영
     done();
@@ -74,8 +75,14 @@ gulp.task('cssCompile', function (done) {
 // JavaScript minify
 gulp.task('jsCompile', function (done) {
     gulp.src(devPath.js, {since:gulp.lastRun('jsCompile')})
-        .pipe(beautify(beautifyOpt))
         .pipe(gulp.dest(buildPath.js)) //위에 설정된 build 폴더에 저장
+        .pipe(browserSync.reload({stream:true}));
+    done();
+});
+
+gulp.task('jsUtilCompile', function (done) {
+    gulp.src(devPath.jsUtils, {since:gulp.lastRun('jsUtilCompile')})
+        .pipe(gulp.dest(buildPath.jsUtils)) //위에 설정된 build 폴더에 저장
         .pipe(browserSync.reload({stream:true}));
     done();
 });
@@ -84,7 +91,7 @@ gulp.task('jsCompile', function (done) {
 gulp.task('imgMinCompile', function (done) {
     gulp.src(devPath.images)
         .pipe(imagemin({ 
-            optimizationLevel: 5, progressive: true, interlaced: true 
+            optimizationLevel: 5, progressive: true, interlaced: true, verbose: true
         })) //이미지 최적화
         .pipe(gulp.dest(buildPath.images)); //동시에 build에도 출력
     done();
@@ -105,6 +112,8 @@ gulp.task('watch', function (done) {
     gulp.watch(devPath.css, gulp.series('cssCompile'));
     //src 디렉토리 안에 js 확장자를 가진 파일이 변경되면 jsCompile task 실행
     gulp.watch(devPath.js, gulp.series('jsCompile'));
+    //src 디렉토리 안에 js/util 폴더 파일이 변경되면 jsUtilCompile task 실행
+    gulp.watch(devPath.jsUtils, gulp.series('jsUtilCompile'));
     //src 디렉토리 안에 js 확장자를 가진 파일이 변경되면 imgMinCompile task 실행
     gulp.watch(devPath.images, gulp.series('imgMinCompile'));
     done();
@@ -113,4 +122,4 @@ gulp.task('watch', function (done) {
 // gulp를 실행하면 default 로 server task와 watch task, imgMinCompile task를 실행
 // series = 순차
 // parallel = 동시 or 병렬(실행은 동시에 시작되지만 처리속도에 따라 종료시점이 달라진다)
-gulp.task('default', gulp.series('jsCompile', 'cssCompile', 'htmlComplie', 'imgMinCompile', 'fontCompile', gulp.parallel('watch', 'server')));
+gulp.task('default', gulp.series('jsCompile', 'jsUtilCompile', 'cssCompile', 'htmlComplie', 'imgMinCompile', 'fontCompile', gulp.parallel('watch', 'server')));
